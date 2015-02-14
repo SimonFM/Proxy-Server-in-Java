@@ -12,10 +12,16 @@ import java.net.*;
  * 	ie: a web-site from mozilla.
  * */
 public class ProxySocket extends Thread{
-	final static int BUFFER_SIZE = 65635;
-	Socket socket, forwardSocket;
+	final int BUFFER_SIZE = 65635;
+	Socket userSocket, forwardSocket;
+
+	/**
+	 * Constructor for a proxySocket:
+	 * Takes in a socket s and then assigns that
+	 * socket to an instance of a socket.
+	 * */ 
 	ProxySocket(Socket s){
-		this.socket = s;
+		this.userSocket = s;
 	}
 	/**
 	 * Runs the proxy thread
@@ -24,8 +30,8 @@ public class ProxySocket extends Thread{
 		try{
 			// While the socket is not closed, keep sending
 			// and receiving requests
-			InputStream fromUser = socket.getInputStream();
-			OutputStream toUser = socket.getOutputStream();
+			InputStream fromUser = userSocket.getInputStream();
+			OutputStream toUser = userSocket.getOutputStream();
 			InputStream fromWebsite = null;
 			OutputStream toWebsite = null;
 			String host = "";
@@ -36,7 +42,7 @@ public class ProxySocket extends Thread{
 			fromUser.read(c);
 			String ss = new String(c);	
 			System.out.println(ss);
-			
+
 			// Split the request up in to the individual
 			// requests. And then search those elements for
 			// the Host name.
@@ -62,24 +68,25 @@ public class ProxySocket extends Thread{
 			System.out.println("Receiving data....");
 			byte[] sentFromWeb = new byte[BUFFER_SIZE];
 			int size;
-			
+
 			// While the size of the packets are a positive number
 			// write the data in to the user's socket.
 			while( (size = fromWebsite.read(sentFromWeb)) != -1){
-				toUser.write(sentFromWeb,0,size);
-				System.out.println(new  String(sentFromWeb));
+				toUser.write(sentFromWeb);
+				//System.out.println(new  String(sentFromWeb));
 				toUser.flush();	
 			}
 
 			// Close the connection to the web site
 			toWebsite.close();
 			fromWebsite.close();
-			System.out.println("Closed Connection");
 			// Close the connection to the user.
 			toUser.close();
 			fromUser.close();
+			System.out.println("Closed Connection");
 
-		}catch(IOException e){
+		}
+		catch(IOException e){
 			System.out.println("Unable to create proxy thread.");
 		}
 	}
