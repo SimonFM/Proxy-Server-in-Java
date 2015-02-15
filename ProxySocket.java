@@ -56,7 +56,7 @@ public class ProxySocket extends Thread{
 			// Input and Output streams from web-sites
 			forwardSocket = new Socket(host,80);
 			System.out.println("Connected to: "+ host);
-			
+
 			fromWebsite = forwardSocket.getInputStream();
 			toWebsite = forwardSocket.getOutputStream();
 
@@ -67,29 +67,32 @@ public class ProxySocket extends Thread{
 
 			// Receive data from web-site.
 			byte[] sentFromWeb = new byte[BUFFER_SIZE];
-			int size;
-			
+			int size = fromWebsite.read(sentFromWeb);
 			// While the size of the packets are a positive number
 			// write the data in to the user's socket.
-			while( (size = fromWebsite.read(sentFromWeb)) != -1){
+			while( size > 0 )
+			{
 				toUser.write(sentFromWeb,0,size);
 				toUser.flush();
+				size = fromWebsite.read(sentFromWeb);
 				System.out.println("Receiving data....from : "+host);
 			}
 			int length;
 			// to deal with requests greater than 4k
 			while(fromUser.available() != 0 && fromWebsite.available() != 0){
-				
+
 				if(fromUser.available() != 0){
 					length = fromUser.read(c);
 					toWebsite.write(c, 0, length);
+					toWebsite.flush();
 				}
-				
+
 				if(fromWebsite.available() != 0){
 					length = fromWebsite.read(c);
 					toUser.write(c, 0, length);
+					toUser.flush();
 				}
-					
+
 			}
 			try
 			{
