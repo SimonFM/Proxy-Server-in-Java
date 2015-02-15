@@ -1,6 +1,5 @@
-/*
- * Created by Simon Markham
- * */
+// Created by Simon Markham
+// 
 
 import java.io.*;
 import java.net.*;
@@ -17,8 +16,8 @@ public class ProxySocket extends Thread{
 
 	/**
 	 * Constructor for a proxySocket:
-	 * Takes in a socket s and then assigns that
-	 * socket to an instance of a socket.
+	 * Takes in a socket s and then assigns that socket to an 
+	 * instance of a socket.
 	 * */ 
 	ProxySocket(Socket s){
 		this.userSocket = s;
@@ -26,7 +25,8 @@ public class ProxySocket extends Thread{
 	/**
 	 * Runs the proxy thread
 	 * */
-	public void run(){
+	public void run() 
+	{
 		try{
 			// While the socket is not closed, keep sending
 			// and receiving requests
@@ -56,6 +56,7 @@ public class ProxySocket extends Thread{
 			// Input and Output streams from web-sites
 			forwardSocket = new Socket(host,80);
 			System.out.println("Connected to: "+ host);
+			
 			fromWebsite = forwardSocket.getInputStream();
 			toWebsite = forwardSocket.getOutputStream();
 
@@ -65,29 +66,51 @@ public class ProxySocket extends Thread{
 			toWebsite.flush();	
 
 			// Receive data from web-site.
-			System.out.println("Receiving data....");
 			byte[] sentFromWeb = new byte[BUFFER_SIZE];
 			int size;
-
+			
 			// While the size of the packets are a positive number
 			// write the data in to the user's socket.
 			while( (size = fromWebsite.read(sentFromWeb)) != -1){
-				toUser.write(sentFromWeb);
-				//System.out.println(new  String(sentFromWeb));
-				toUser.flush();	
+				toUser.write(sentFromWeb,0,size);
+				toUser.flush();
+				System.out.println("Receiving data....from : "+host);
 			}
-
-			// Close the connection to the web site
-			toWebsite.close();
-			fromWebsite.close();
-			// Close the connection to the user.
-			toUser.close();
-			fromUser.close();
-			System.out.println("Closed Connection");
-
+			int length;
+			// to deal with requests greater than 4k
+			while(fromUser.available() != 0 && fromWebsite.available() != 0){
+				
+				if(fromUser.available() != 0){
+					length = fromUser.read(c);
+					toWebsite.write(c, 0, length);
+				}
+				
+				if(fromWebsite.available() != 0){
+					length = fromWebsite.read(c);
+					toUser.write(c, 0, length);
+				}
+					
+			}
+			try
+			{
+				// Close the connection to the web site
+				toWebsite.close();
+				fromWebsite.close();
+				// Close the connection to the user.
+				toUser.close();
+				fromUser.close();
+				System.out.println("Closed Connection");
+			}
+			catch(IOException e1)
+			{
+				System.out.println("Unable to close connection");
+				e1.printStackTrace();
+			}
 		}
-		catch(IOException e){
-			System.out.println("Unable to create proxy thread.");
+		catch(IOException e1)
+		{
+			System.out.println("Unable to connect to host");
+			e1.printStackTrace();
 		}
 	}
 }
